@@ -1,6 +1,5 @@
-package com.github.Croniks3.logic;
+package com.github.Croniks3.model;
 
-import com.github.Croniks3.model.TabGroupKey;
 import com.github.Croniks3.settings.TabGroupsSettingsState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,10 +10,10 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 
-public final class TabGroupingRules {
+public final class GroupedExtensionsRule {
     private final Set<String> groupedExtensions;
 
-    public TabGroupingRules(@NotNull List<String> groupedExtensions) {
+    public GroupedExtensionsRule(@NotNull List<String> groupedExtensions) {
         Objects.requireNonNull(groupedExtensions);
 
         this.groupedExtensions = new LinkedHashSet<>();
@@ -26,33 +25,21 @@ public final class TabGroupingRules {
         }
     }
 
-    public static @NotNull TabGroupingRules fromState(@NotNull TabGroupsSettingsState state) {
+    public static @NotNull GroupedExtensionsRule fromState(@NotNull TabGroupsSettingsState state) {
         Objects.requireNonNull(state);
-        return new TabGroupingRules(state.groupedExtensions);
+        return new GroupedExtensionsRule(state.groupedExtensions);
     }
 
     public boolean isGroupedExtension(@NotNull String extension) {
+        Objects.requireNonNull(extension);
         return groupedExtensions.contains(normalizeExtension(extension));
-    }
-
-    public @Nullable TabGroupKey tryCreateGroupedFileKey(@NotNull String fileName) {
-        TabGroupKey key = TabGroupKey.tryCreate(fileName);
-        if (key == null) {
-            return null;
-        }
-
-        if (!isGroupedExtension(key.getExtension())) {
-            return null;
-        }
-
-        return key;
     }
 
     public @NotNull Set<String> getGroupedExtensions() {
         return Set.copyOf(groupedExtensions);
     }
 
-    private static @NotNull String normalizeExtension(String extension) {
+    private static @NotNull String normalizeExtension(@Nullable String extension) {
         if (extension == null) {
             return "";
         }
