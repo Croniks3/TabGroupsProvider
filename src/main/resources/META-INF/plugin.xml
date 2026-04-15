@@ -4,7 +4,7 @@
     <vendor>YourName</vendor>
 
     <description><![CDATA[
-        Groups files with the same name and a set of specified file extensions into one tab.
+        Groups files with the same basename by configurable extension rules.
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
