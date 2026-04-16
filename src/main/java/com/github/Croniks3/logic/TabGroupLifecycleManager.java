@@ -2,12 +2,15 @@ package com.github.Croniks3.logic;
 
 import com.github.Croniks3.model.GroupedExtensionsRule;
 import com.github.Croniks3.model.ProjectFileChange;
+import com.github.Croniks3.model.ProjectFileChangeType;
 import com.github.Croniks3.model.ProjectFileInfo;
 import com.github.Croniks3.model.TabGroup;
+import com.github.Croniks3.model.TabGroupDefinition;
 import com.github.Croniks3.model.TabGroupUpdateAction;
 import com.github.Croniks3.model.TabGroupUpdateResult;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 
@@ -36,12 +39,46 @@ public final class TabGroupLifecycleManager {
             return new TabGroupUpdateResult(TabGroupUpdateAction.REMOVE_GROUP, null);
         }
 
+        TabGroup groupForRebuild = prepareGroupForRebuild(group, change);
+
         TabGroup rebuiltGroup = groupBuilder.rebuild(
-                group,
+                groupForRebuild,
                 projectFiles,
                 groupedExtensionsRule
         );
 
         return new TabGroupUpdateResult(TabGroupUpdateAction.REBUILD, rebuiltGroup);
+    }
+
+    private @NotNull TabGroup prepareGroupForRebuild(
+            @NotNull TabGroup group,
+            @NotNull ProjectFileChange change
+    ) {
+        ProjectFileChangeType changeType = change.getType();
+        if (changeType != ProjectFileChangeType.MOVED && changeType != ProjectFileChangeType.RENAMED) {
+            return group;
+        }
+
+        String oldFilePath = change.getOldFilePath();
+        String newFilePath = change.getNewFilePath();
+        if (oldFilePath == null || oldFilePath.isBlank() || newFilePath == null || newFilePath.isBlank()) {
+            return group;
+        }
+
+        if (!isSamePath(group.getDefinition().getSourceFilePath(), oldFilePath)) {
+            return group;
+        }
+
+        TabGroupDefinition updatedDefinition = group.getDefinition().withSourceFilePath(newFilePath);
+
+        return new TabGroup(
+                group.getId(),
+                updatedDefinition,
+                group.getFilePaths()
+        );
+    }
+
+    private boolean isSamePath(@NotNull String firstPath, @NotNull String secondPath) {
+        return Path.of(firstPath).normalize().equals(Path.of(secondPath).normalize());
     }
 }

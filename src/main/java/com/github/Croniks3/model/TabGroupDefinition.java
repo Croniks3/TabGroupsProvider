@@ -48,4 +48,12 @@ public final class TabGroupDefinition {
     public boolean hasAnyActiveRule() {
         return hasActiveNameRule() || hasActiveDirectoryRules();
     }
+
+    public @NotNull TabGroupDefinition withSourceFilePath(@NotNull String newSourceFilePath) {
+        return new TabGroupDefinition(
+                Objects.requireNonNull(newSourceFilePath),
+                nameMatchRule,
+                directoryRules
+        );
+    }
 }
