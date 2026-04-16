@@ -39,10 +39,18 @@ public final class TabGroupLifecycleManager {
             return new TabGroupUpdateResult(TabGroupUpdateAction.REMOVE_GROUP, null);
         }
 
-        TabGroup groupForRebuild = prepareGroupForRebuild(group, change);
+        if(hasGroupSourceFilePathChanged(group, change)) {
+            String newFilePath = Objects.requireNonNull(change.getNewFilePath());
+            TabGroupDefinition updatedDefinition = group.getDefinition().withSourceFilePath(newFilePath);
+            group = new TabGroup(
+                    group.getId(),
+                    updatedDefinition,
+                    group.getFilePaths()
+            );
+        }
 
         TabGroup rebuiltGroup = groupBuilder.rebuild(
-                groupForRebuild,
+                group,
                 projectFiles,
                 groupedExtensionsRule
         );
@@ -50,32 +58,22 @@ public final class TabGroupLifecycleManager {
         return new TabGroupUpdateResult(TabGroupUpdateAction.REBUILD, rebuiltGroup);
     }
 
-    private @NotNull TabGroup prepareGroupForRebuild(
+    private boolean hasGroupSourceFilePathChanged(
             @NotNull TabGroup group,
             @NotNull ProjectFileChange change
-    ) {
+    ){
         ProjectFileChangeType changeType = change.getType();
         if (changeType != ProjectFileChangeType.MOVED && changeType != ProjectFileChangeType.RENAMED) {
-            return group;
+            return false;
         }
 
         String oldFilePath = change.getOldFilePath();
         String newFilePath = change.getNewFilePath();
         if (oldFilePath == null || oldFilePath.isBlank() || newFilePath == null || newFilePath.isBlank()) {
-            return group;
+            return false;
         }
 
-        if (!isSamePath(group.getDefinition().getSourceFilePath(), oldFilePath)) {
-            return group;
-        }
-
-        TabGroupDefinition updatedDefinition = group.getDefinition().withSourceFilePath(newFilePath);
-
-        return new TabGroup(
-                group.getId(),
-                updatedDefinition,
-                group.getFilePaths()
-        );
+        return isSamePath(group.getDefinition().getSourceFilePath(), oldFilePath);
     }
 
     private boolean isSamePath(@NotNull String firstPath, @NotNull String secondPath) {
