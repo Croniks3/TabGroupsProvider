@@ -36,9 +36,9 @@ public final class TabGroupLifecycleManager {
             return new TabGroupUpdateResult(TabGroupUpdateAction.REMOVE_GROUP, null);
         }
 
-        TabGroup rebuiltGroup = groupBuilder.build(
+        TabGroup rebuiltGroup = groupBuilder.rebuild(
+                group,
                 projectFiles,
-                group.getDefinition(),
                 groupedExtensionsRule
         );
 

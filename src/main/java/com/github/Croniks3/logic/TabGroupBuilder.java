@@ -35,4 +35,27 @@ public final class TabGroupBuilder {
 
         return new TabGroup(definition, filePaths);
     }
+
+    public @NotNull TabGroup rebuild(
+            @NotNull TabGroup existingGroup,
+            @NotNull List<ProjectFileInfo> projectFiles,
+            @NotNull GroupedExtensionsRule groupedExtensionsRule
+    ) {
+        Objects.requireNonNull(existingGroup);
+        Objects.requireNonNull(projectFiles);
+        Objects.requireNonNull(groupedExtensionsRule);
+
+        List<ProjectFileInfo> matchedFiles = filesCollector.collectMatchedFiles(
+                projectFiles,
+                existingGroup.getDefinition(),
+                groupedExtensionsRule
+        );
+
+        List<String> filePaths = new ArrayList<>(matchedFiles.size());
+        for (ProjectFileInfo matchedFile : matchedFiles) {
+            filePaths.add(matchedFile.getFilePath());
+        }
+
+        return new TabGroup(existingGroup.getId(), existingGroup.getDefinition(), filePaths);
+    }
 }
