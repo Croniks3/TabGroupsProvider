@@ -5,6 +5,7 @@ import com.github.Croniks3.model.ProjectFileInfo;
 import com.github.Croniks3.model.TabGroupDefinition;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
 import java.util.Objects;
 
 public final class TabGroupCandidateMatcher {
@@ -30,6 +31,13 @@ public final class TabGroupCandidateMatcher {
             return false;
         }
 
+        boolean hasActiveNameRule = definition.hasActiveNameRule();
+        boolean hasActiveDirectoryRules = definition.hasActiveDirectoryRules();
+
+        if (!hasActiveNameRule && !hasActiveDirectoryRules) {
+            return isSamePath(sourceFile.getFilePath(), candidateFile.getFilePath());
+        }
+
         boolean matchesName = nameRuleMatcher.matches(
                 sourceFile,
                 candidateFile,
@@ -41,6 +49,18 @@ public final class TabGroupCandidateMatcher {
                 definition.getDirectoryRules()
         );
 
-        return matchesName && matchesDirectory;
+        if (hasActiveNameRule && hasActiveDirectoryRules) {
+            return matchesName && matchesDirectory;
+        }
+
+        if (hasActiveNameRule) {
+            return matchesName;
+        }
+
+        return matchesDirectory;
+    }
+
+    private boolean isSamePath(@NotNull String firstPath, @NotNull String secondPath) {
+        return Path.of(firstPath).normalize().equals(Path.of(secondPath).normalize());
     }
 }

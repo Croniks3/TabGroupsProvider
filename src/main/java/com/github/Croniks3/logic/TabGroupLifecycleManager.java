@@ -49,6 +49,10 @@ public final class TabGroupLifecycleManager {
             );
         }
 
+        // Тут возможно не нужно передавать все файлы,
+        // а лучше запрашивать у API IDE индексы тех файлов
+        // которые изменились, формировать из них список и передавать.
+        // Или делать это уровнем выше в момент вызова handleChange().
         TabGroup rebuiltGroup = groupBuilder.rebuild(
                 group,
                 projectFiles,
