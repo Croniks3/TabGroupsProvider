@@ -2,10 +2,13 @@ package com.github.Croniks3.logic;
 
 import com.github.Croniks3.model.GroupedExtensionsRule;
 import com.github.Croniks3.model.ProjectFileChange;
-import com.github.Croniks3.model.enums.ProjectFileChangeType;
 import com.github.Croniks3.model.ProjectFileInfo;
 import com.github.Croniks3.model.TabGroup;
+import com.github.Croniks3.model.TabGroupChangeInfo;
+import com.github.Croniks3.model.TabGroupLightUpdate;
+import com.github.Croniks3.model.enums.ProjectFileChangeType;
 import com.github.Croniks3.model.enums.TabGroupChangeType;
+import com.github.Croniks3.model.enums.TabGroupLightUpdateType;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -15,7 +18,7 @@ import java.util.Objects;
 public final class TabGroupChangeAnalyzer {
     private final TabGroupCandidateMatcher candidateMatcher = new TabGroupCandidateMatcher();
 
-    public @NotNull TabGroupChangeType analyze(
+    public @NotNull TabGroupChangeInfo analyze(
             @NotNull TabGroup group,
             @NotNull ProjectFileChange change,
             @NotNull GroupedExtensionsRule groupedExtensionsRule
@@ -29,53 +32,99 @@ public final class TabGroupChangeAnalyzer {
         if (changeType == ProjectFileChangeType.CREATED) {
             String newFilePath = change.getNewFilePath();
             if (newFilePath == null || newFilePath.isBlank()) {
-                return TabGroupChangeType.NONE;
+                return createChangeInfoWithEmpty();
             }
 
-            return matchesGroup(group, newFilePath, groupedExtensionsRule)
-                    ? TabGroupChangeType.LIGHT_UPDATE
-                    : TabGroupChangeType.NONE;
+            if (matchesGroup(group, newFilePath, groupedExtensionsRule)) {
+                return createChangeInfoWithLightUpdate(new TabGroupLightUpdate(
+                        TabGroupLightUpdateType.ADD_FILE,
+                        null,
+                        newFilePath
+                ));
+            }
+
+            return createChangeInfoWithEmpty();
         }
 
         if (changeType == ProjectFileChangeType.DELETED) {
             String oldFilePath = change.getOldFilePath();
             if (oldFilePath == null || oldFilePath.isBlank()) {
-                return TabGroupChangeType.NONE;
+                return createChangeInfoWithEmpty();
             }
 
             if (isSourceFile(group, oldFilePath)) {
-                return TabGroupChangeType.REMOVE_GROUP;
+                return createChangeInfoWithRemoveGroup();
             }
 
             if (containsFile(group, oldFilePath)) {
-                return TabGroupChangeType.LIGHT_UPDATE;
+                return createChangeInfoWithLightUpdate(new TabGroupLightUpdate(
+                        TabGroupLightUpdateType.REMOVE_FILE,
+                        oldFilePath,
+                        null
+                ));
             }
 
-            return TabGroupChangeType.NONE;
+            return createChangeInfoWithEmpty();
         }
 
         if (changeType == ProjectFileChangeType.RENAMED || changeType == ProjectFileChangeType.MOVED) {
             String oldFilePath = change.getOldFilePath();
             String newFilePath = change.getNewFilePath();
             if (oldFilePath == null || oldFilePath.isBlank() || newFilePath == null || newFilePath.isBlank()) {
-                return TabGroupChangeType.NONE;
+                return createChangeInfoWithEmpty();
             }
 
             if (isSourceFile(group, oldFilePath)) {
-                return TabGroupChangeType.HEAVY_REBUILD;
+                return createChangeInfoWithHeavyRebuild();
             }
 
             boolean oldFileWasInGroup = containsFile(group, oldFilePath);
             boolean newFileMatchesGroup = matchesGroup(group, newFilePath, groupedExtensionsRule);
 
-            if (oldFileWasInGroup || newFileMatchesGroup) {
-                return TabGroupChangeType.LIGHT_UPDATE;
+            if (oldFileWasInGroup && newFileMatchesGroup) {
+                return createChangeInfoWithLightUpdate(new TabGroupLightUpdate(
+                        TabGroupLightUpdateType.REPLACE_FILE_PATH,
+                        oldFilePath,
+                        newFilePath
+                ));
             }
 
-            return TabGroupChangeType.NONE;
+            if (oldFileWasInGroup) {
+                return createChangeInfoWithLightUpdate(new TabGroupLightUpdate(
+                        TabGroupLightUpdateType.REMOVE_FILE,
+                        oldFilePath,
+                        null
+                ));
+            }
+
+            if (newFileMatchesGroup) {
+                return createChangeInfoWithLightUpdate(new TabGroupLightUpdate(
+                        TabGroupLightUpdateType.ADD_FILE,
+                        null,
+                        newFilePath
+                ));
+            }
+
+            return createChangeInfoWithEmpty();
         }
 
-        return TabGroupChangeType.NONE;
+        return createChangeInfoWithEmpty();
+    }
+
+    private @NotNull TabGroupChangeInfo createChangeInfoWithEmpty() {
+        return new TabGroupChangeInfo();
+    }
+
+    private @NotNull TabGroupChangeInfo createChangeInfoWithRemoveGroup() {
+        return new TabGroupChangeInfo(TabGroupChangeType.REMOVE_GROUP, null);
+    }
+
+    private @NotNull TabGroupChangeInfo createChangeInfoWithHeavyRebuild() {
+        return new TabGroupChangeInfo(TabGroupChangeType.HEAVY_REBUILD, null);
+    }
+
+    private @NotNull TabGroupChangeInfo createChangeInfoWithLightUpdate(@NotNull TabGroupLightUpdate update) {
+        return new TabGroupChangeInfo(TabGroupChangeType.LIGHT_UPDATE, update);
     }
 
     private boolean matchesGroup(
