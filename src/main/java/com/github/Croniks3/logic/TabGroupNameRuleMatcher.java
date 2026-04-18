@@ -1,6 +1,6 @@
 package com.github.Croniks3.logic;
 
-import com.github.Croniks3.model.NameMatchRuleMode;
+import com.github.Croniks3.model.enums.NameMatchRuleMode;
 import com.github.Croniks3.model.ProjectFileInfo;
 import com.github.Croniks3.model.TabGroupNameMatchRule;
 import org.jetbrains.annotations.NotNull;

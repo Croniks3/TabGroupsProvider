@@ -1,5 +1,6 @@
 package com.github.Croniks3.model;
 
+import com.github.Croniks3.model.enums.ProjectFileChangeType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

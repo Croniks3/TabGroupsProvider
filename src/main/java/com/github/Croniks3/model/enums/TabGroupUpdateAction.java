@@ -1,4 +1,4 @@
-package com.github.Croniks3.model;
+package com.github.Croniks3.model.enums;
 
 public enum TabGroupUpdateAction {
     NONE,

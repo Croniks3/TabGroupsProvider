@@ -1,14 +1,14 @@
 package com.github.Croniks3.logic;
 
-import com.github.Croniks3.model.NameMatchRuleMode;
+import com.github.Croniks3.model.enums.NameMatchRuleMode;
 import com.github.Croniks3.model.ProjectFileChange;
-import com.github.Croniks3.model.ProjectFileChangeType;
+import com.github.Croniks3.model.enums.ProjectFileChangeType;
 import com.github.Croniks3.model.TabGroup;
 import com.github.Croniks3.model.TabGroupDefinition;
 import com.github.Croniks3.model.TabGroupDirectoryRule;
 import com.github.Croniks3.model.TabGroupKey;
 import com.github.Croniks3.model.TabGroupNameMatchRule;
-import com.github.Croniks3.model.TabGroupUpdateAction;
+import com.github.Croniks3.model.enums.TabGroupUpdateAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
