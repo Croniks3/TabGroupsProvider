@@ -30,7 +30,20 @@ public final class TabGroupFilesCollector {
 
         List<ProjectFileInfo> result = new ArrayList<>();
 
+        // Сравниваем исходный файл группы с самим собой на всякий случай,
+        // что бы зафиксировать его первым в массиве result. Это нужно, что бы
+        // TabGroupFilesLimiter случайно не срезал этот файл из результата.
+        if (candidateMatcher.matches(sourceFile, sourceFile, definition, groupedExtensionsRule)) {
+            result.add(sourceFile);
+        }
+
         for (ProjectFileInfo candidateFile : projectFiles) {
+            // Так как в result исходный файл группы был уже добавлен выше,
+            // делаем проверку, на то что бы он не попал второй раз.
+            if (isSamePath(candidateFile.getFilePath(), sourceFile.getFilePath())) {
+                continue;
+            }
+
             if (candidateMatcher.matches(sourceFile, candidateFile, definition, groupedExtensionsRule)) {
                 result.add(candidateFile);
             }
@@ -56,5 +69,9 @@ public final class TabGroupFilesCollector {
         }
 
         return null;
+    }
+
+    private boolean isSamePath(@NotNull String firstPath, @NotNull String secondPath) {
+        return Path.of(firstPath).normalize().equals(Path.of(secondPath).normalize());
     }
 }
