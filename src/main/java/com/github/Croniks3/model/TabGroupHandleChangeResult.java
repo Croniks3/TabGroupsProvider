@@ -1,25 +1,25 @@
 package com.github.Croniks3.model;
 
-import com.github.Croniks3.model.enums.TabGroupUpdateAction;
+import com.github.Croniks3.model.enums.TabGroupChangeType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public final class TabGroupUpdateResult {
-    private final TabGroupUpdateAction action;
+public final class TabGroupHandleChangeResult {
+    private final TabGroupChangeType changeType;
     private final TabGroup updatedGroup;
 
-    public TabGroupUpdateResult(
-            @NotNull TabGroupUpdateAction action,
+    public TabGroupHandleChangeResult(
+            @NotNull TabGroupChangeType changeType,
             @Nullable TabGroup updatedGroup
     ) {
-        this.action = Objects.requireNonNull(action);
+        this.changeType = Objects.requireNonNull(changeType);
         this.updatedGroup = updatedGroup;
     }
 
-    public @NotNull TabGroupUpdateAction getAction() {
-        return action;
+    public @NotNull TabGroupChangeType getChangeType() {
+        return changeType;
     }
 
     public @Nullable TabGroup getUpdatedGroup() {

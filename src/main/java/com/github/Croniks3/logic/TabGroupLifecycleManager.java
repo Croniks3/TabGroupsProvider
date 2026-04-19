@@ -2,12 +2,14 @@ package com.github.Croniks3.logic;
 
 import com.github.Croniks3.model.GroupedExtensionsRule;
 import com.github.Croniks3.model.ProjectFileChange;
-import com.github.Croniks3.model.enums.ProjectFileChangeType;
 import com.github.Croniks3.model.ProjectFileInfo;
 import com.github.Croniks3.model.TabGroup;
+import com.github.Croniks3.model.TabGroupChangeInfo;
 import com.github.Croniks3.model.TabGroupDefinition;
-import com.github.Croniks3.model.enums.TabGroupUpdateAction;
-import com.github.Croniks3.model.TabGroupUpdateResult;
+import com.github.Croniks3.model.TabGroupHandleChangeResult;
+import com.github.Croniks3.model.TabGroupLightUpdate;
+import com.github.Croniks3.model.enums.ProjectFileChangeType;
+import com.github.Croniks3.model.enums.TabGroupChangeType;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -15,69 +17,81 @@ import java.util.List;
 import java.util.Objects;
 
 public final class TabGroupLifecycleManager {
-    private final TabGroupUpdatePolicy updatePolicy = new TabGroupUpdatePolicy();
+    private final TabGroupChangeAnalyzer changeAnalyzer = new TabGroupChangeAnalyzer();
+    private final TabGroupLightUpdater lightUpdater = new TabGroupLightUpdater();
     private final TabGroupBuilder groupBuilder = new TabGroupBuilder();
 
-    public @NotNull TabGroupUpdateResult handleChange(
+    public @NotNull TabGroupHandleChangeResult handleChange(
             @NotNull TabGroup group,
-            @NotNull ProjectFileChange change,
+            @NotNull ProjectFileChange fileChange,
             @NotNull List<ProjectFileInfo> projectFiles,
             @NotNull GroupedExtensionsRule groupedExtensionsRule
     ) {
         Objects.requireNonNull(group);
-        Objects.requireNonNull(change);
+        Objects.requireNonNull(fileChange);
         Objects.requireNonNull(projectFiles);
         Objects.requireNonNull(groupedExtensionsRule);
 
-        TabGroupUpdateAction action = updatePolicy.decide(group, change);
-
-        if (action == TabGroupUpdateAction.NONE) {
-            return new TabGroupUpdateResult(TabGroupUpdateAction.NONE, null);
-        }
-
-        if (action == TabGroupUpdateAction.REMOVE_GROUP) {
-            return new TabGroupUpdateResult(TabGroupUpdateAction.REMOVE_GROUP, null);
-        }
-
-        if(hasGroupSourceFilePathChanged(group, change)) {
-            String newFilePath = Objects.requireNonNull(change.getNewFilePath());
-            TabGroupDefinition updatedDefinition = group.getDefinition().withSourceFilePath(newFilePath);
-            group = new TabGroup(
-                    group.getId(),
-                    updatedDefinition,
-                    group.getFilePaths()
-            );
-        }
-
-        // Тут возможно не нужно передавать все файлы,
-        // а лучше запрашивать у API IDE индексы тех файлов
-        // которые изменились, формировать из них список и передавать.
-        // Или делать это уровнем выше в момент вызова handleChange().
-        TabGroup rebuiltGroup = groupBuilder.rebuild(
+        TabGroupChangeInfo changeInfo = changeAnalyzer.analyze(
                 group,
+                fileChange,
+                groupedExtensionsRule
+        );
+
+        TabGroupChangeType groupChangeType = changeInfo.getChangeType();
+
+        if (groupChangeType == TabGroupChangeType.NONE) {
+            return new TabGroupHandleChangeResult(TabGroupChangeType.NONE, null);
+        }
+
+        if (groupChangeType == TabGroupChangeType.REMOVE_GROUP) {
+            return new TabGroupHandleChangeResult(TabGroupChangeType.REMOVE_GROUP, null);
+        }
+
+        if (groupChangeType == TabGroupChangeType.LIGHT_UPDATE) {
+            TabGroupLightUpdate lightUpdate = Objects.requireNonNull(changeInfo.getLightUpdate());
+            TabGroup updatedGroup = lightUpdater.apply(group, lightUpdate);
+
+            return new TabGroupHandleChangeResult(TabGroupChangeType.LIGHT_UPDATE, updatedGroup);
+        }
+
+        TabGroup groupForRebuild = prepareGroupForHeavyRebuild(group, fileChange);
+
+        TabGroup rebuiltGroup = groupBuilder.rebuild(
+                groupForRebuild,
                 projectFiles,
                 groupedExtensionsRule
         );
 
-        return new TabGroupUpdateResult(TabGroupUpdateAction.REBUILD, rebuiltGroup);
+        return new TabGroupHandleChangeResult(TabGroupChangeType.HEAVY_REBUILD, rebuiltGroup);
     }
 
-    private boolean hasGroupSourceFilePathChanged(
+    private @NotNull TabGroup prepareGroupForHeavyRebuild(
             @NotNull TabGroup group,
             @NotNull ProjectFileChange change
-    ){
+    ) {
         ProjectFileChangeType changeType = change.getType();
         if (changeType != ProjectFileChangeType.MOVED && changeType != ProjectFileChangeType.RENAMED) {
-            return false;
+            return group;
         }
 
         String oldFilePath = change.getOldFilePath();
         String newFilePath = change.getNewFilePath();
         if (oldFilePath == null || oldFilePath.isBlank() || newFilePath == null || newFilePath.isBlank()) {
-            return false;
+            return group;
         }
 
-        return isSamePath(group.getDefinition().getSourceFilePath(), oldFilePath);
+        if (!isSamePath(group.getDefinition().getSourceFilePath(), oldFilePath)) {
+            return group;
+        }
+
+        TabGroupDefinition updatedDefinition = group.getDefinition().withSourceFilePath(newFilePath);
+
+        return new TabGroup(
+                group.getId(),
+                updatedDefinition,
+                group.getFilePaths()
+        );
     }
 
     private boolean isSamePath(@NotNull String firstPath, @NotNull String secondPath) {
