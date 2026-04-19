@@ -51,7 +51,7 @@ public final class TabGroupLifecycleManager {
 
         if (groupChangeType == TabGroupChangeType.LIGHT_UPDATE) {
             TabGroupLightUpdate lightUpdate = Objects.requireNonNull(changeInfo.getLightUpdate());
-            TabGroup updatedGroup = lightUpdater.apply(group, lightUpdate);
+            TabGroup updatedGroup = lightUpdater.apply(group, lightUpdate, maxFilesPerGroup);
 
             return new TabGroupHandleChangeResult(TabGroupChangeType.LIGHT_UPDATE, updatedGroup);
         }

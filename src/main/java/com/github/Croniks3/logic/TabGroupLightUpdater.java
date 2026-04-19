@@ -12,9 +12,12 @@ import java.util.Objects;
 
 public final class TabGroupLightUpdater {
 
+    private final TabGroupFilesLimiter filesLimiter = new TabGroupFilesLimiter();
+
     public @NotNull TabGroup apply(
             @NotNull TabGroup group,
-            @NotNull TabGroupLightUpdate update
+            @NotNull TabGroupLightUpdate update,
+            int maxFilesPerGroup
     ) {
         Objects.requireNonNull(group);
         Objects.requireNonNull(update);
@@ -30,7 +33,6 @@ public final class TabGroupLightUpdater {
             if (newFilePath == null || newFilePath.isBlank()) {
                 return group;
             }
-
             if (containsPath(group.getFilePaths(), newFilePath)) {
                 return group;
             }
@@ -38,11 +40,8 @@ public final class TabGroupLightUpdater {
             List<String> updatedFilePaths = new ArrayList<>(group.getFilePaths());
             updatedFilePaths.add(newFilePath);
 
-            return new TabGroup(
-                    group.getId(),
-                    group.getDefinition(),
-                    updatedFilePaths
-            );
+            List<String> limitedFilePaths = filesLimiter.applyLimit(updatedFilePaths, maxFilesPerGroup);
+            return new TabGroup(group.getId(), group.getDefinition(), limitedFilePaths);
         }
 
         if (updateType == TabGroupLightUpdateType.REMOVE_FILE) {
@@ -59,7 +58,6 @@ public final class TabGroupLightUpdater {
                     changed = true;
                     continue;
                 }
-
                 updatedFilePaths.add(filePath);
             }
 
@@ -67,17 +65,15 @@ public final class TabGroupLightUpdater {
                 return group;
             }
 
-            return new TabGroup(
-                    group.getId(),
-                    group.getDefinition(),
-                    updatedFilePaths
-            );
+            return new TabGroup(group.getId(), group.getDefinition(), updatedFilePaths);
         }
 
         if (updateType == TabGroupLightUpdateType.REPLACE_FILE_PATH) {
             String oldFilePath = update.getOldFilePath();
             String newFilePath = update.getNewFilePath();
-            if (oldFilePath == null || oldFilePath.isBlank() || newFilePath == null || newFilePath.isBlank()) {
+
+            if (oldFilePath == null || oldFilePath.isBlank() ||
+                    newFilePath == null || newFilePath.isBlank()) {
                 return group;
             }
 
@@ -87,11 +83,9 @@ public final class TabGroupLightUpdater {
             for (String filePath : group.getFilePaths()) {
                 if (isSamePath(filePath, oldFilePath)) {
                     replaced = true;
-
                     if (!containsPath(updatedFilePaths, newFilePath)) {
                         updatedFilePaths.add(newFilePath);
                     }
-
                     continue;
                 }
 
@@ -104,11 +98,7 @@ public final class TabGroupLightUpdater {
                 return group;
             }
 
-            return new TabGroup(
-                    group.getId(),
-                    group.getDefinition(),
-                    updatedFilePaths
-            );
+            return new TabGroup(group.getId(), group.getDefinition(), updatedFilePaths);
         }
 
         return group;
@@ -120,7 +110,6 @@ public final class TabGroupLightUpdater {
                 return true;
             }
         }
-
         return false;
     }
 
