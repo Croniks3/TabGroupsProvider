@@ -12,11 +12,13 @@ import java.util.Objects;
 
 public final class TabGroupBuilder {
     private final TabGroupFilesCollector filesCollector = new TabGroupFilesCollector();
+    private final TabGroupFilesLimiter filesLimiter = new TabGroupFilesLimiter();
 
     public @NotNull TabGroup build(
             @NotNull List<ProjectFileInfo> projectFiles,
             @NotNull TabGroupDefinition definition,
-            @NotNull GroupedExtensionsRule groupedExtensionsRule
+            @NotNull GroupedExtensionsRule groupedExtensionsRule,
+            int maxFilesPerGroup
     ) {
         Objects.requireNonNull(projectFiles);
         Objects.requireNonNull(definition);
@@ -33,13 +35,16 @@ public final class TabGroupBuilder {
             filePaths.add(matchedFile.getFilePath());
         }
 
-        return new TabGroup(definition, filePaths);
+        List<String> limitedFilePaths = filesLimiter.applyLimit(filePaths, maxFilesPerGroup);
+
+        return new TabGroup(definition, limitedFilePaths);
     }
 
     public @NotNull TabGroup rebuild(
             @NotNull TabGroup existingGroup,
             @NotNull List<ProjectFileInfo> projectFiles,
-            @NotNull GroupedExtensionsRule groupedExtensionsRule
+            @NotNull GroupedExtensionsRule groupedExtensionsRule,
+            int maxFilesPerGroup
     ) {
         Objects.requireNonNull(existingGroup);
         Objects.requireNonNull(projectFiles);
@@ -56,6 +61,8 @@ public final class TabGroupBuilder {
             filePaths.add(matchedFile.getFilePath());
         }
 
-        return new TabGroup(existingGroup.getId(), existingGroup.getDefinition(), filePaths);
+        List<String> limitedFilePaths = filesLimiter.applyLimit(filePaths, maxFilesPerGroup);
+
+        return new TabGroup(existingGroup.getId(), existingGroup.getDefinition(), limitedFilePaths);
     }
 }

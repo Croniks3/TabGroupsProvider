@@ -25,7 +25,8 @@ public final class TabGroupLifecycleManager {
             @NotNull TabGroup group,
             @NotNull ProjectFileChange fileChange,
             @NotNull List<ProjectFileInfo> projectFiles,
-            @NotNull GroupedExtensionsRule groupedExtensionsRule
+            @NotNull GroupedExtensionsRule groupedExtensionsRule,
+            int maxFilesPerGroup
     ) {
         Objects.requireNonNull(group);
         Objects.requireNonNull(fileChange);
@@ -60,7 +61,8 @@ public final class TabGroupLifecycleManager {
         TabGroup rebuiltGroup = groupBuilder.rebuild(
                 groupForRebuild,
                 projectFiles,
-                groupedExtensionsRule
+                groupedExtensionsRule,
+                maxFilesPerGroup
         );
 
         return new TabGroupHandleChangeResult(TabGroupChangeType.HEAVY_REBUILD, rebuiltGroup);

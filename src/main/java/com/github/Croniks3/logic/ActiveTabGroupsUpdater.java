@@ -19,7 +19,8 @@ public final class ActiveTabGroupsUpdater {
             @NotNull ActiveTabGroups activeTabGroups,
             @NotNull ProjectFileChange fileChange,
             @NotNull List<ProjectFileInfo> projectFiles,
-            @NotNull GroupedExtensionsRule groupedExtensionsRule
+            @NotNull GroupedExtensionsRule groupedExtensionsRule,
+            int maxFilesPerGroup
     ) {
         Objects.requireNonNull(activeTabGroups);
         Objects.requireNonNull(fileChange);
@@ -33,7 +34,8 @@ public final class ActiveTabGroupsUpdater {
                     group,
                     fileChange,
                     projectFiles,
-                    groupedExtensionsRule
+                    groupedExtensionsRule,
+                    maxFilesPerGroup
             );
 
             TabGroupChangeType changeType = result.getChangeType();
