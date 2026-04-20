@@ -29,15 +29,14 @@ public final class TabGroupFilesCollector {
         List<ProjectFileInfo> candidatesBeforeSource = new ArrayList<>();
         List<ProjectFileInfo> result = new ArrayList<>();
 
+        // Очень тяжелая логика, в будущем попробывать сделать
+        // через API JetBrains!!!
         for (ProjectFileInfo projectFile : projectFiles) {
             Path normalizedProjectFilePath = Path.of(projectFile.getFilePath()).normalize();
 
             if (normalizedProjectFilePath.equals(normalizedSourcePath)) {
                 sourceFile = projectFile;
-
-                if (candidateMatcher.matches(sourceFile, sourceFile, definition, groupedExtensionsRule)) {
-                    result.add(sourceFile);
-                }
+                result.add(sourceFile);
 
                 for (ProjectFileInfo candidateFile : candidatesBeforeSource) {
                     if (candidateMatcher.matches(sourceFile, candidateFile, definition, groupedExtensionsRule)) {

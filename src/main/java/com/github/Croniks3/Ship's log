@@ -48,5 +48,13 @@
 На данный момент она вызывается в TabGroupLifecycleManager -> groupBuilder.rebuild().
 
 TabGroupsFilesCollector написан просто ужасно. Дважды совершает проход по всем файлам проекта,
-в методах collectMatchedFiles и findSourceFile - это пиздец, с этим нужно что-то делать! - исправлено
+в методах collectMatchedFiles и findSourceFile - это пиздец, с этим нужно что-то делать!
+ИСПРАВЛЕНО!
 
+Логику TabGroupFilesLimiter нужно перенести из TabGroupBuilder в TabGroupCollector, так как коллектор
+может вернуть все файлы проекта и в билдере будет снова проход по всем файлам в цикле по matchedFiles.
+А также для List<ProjectFileInfo> result в TabGroupFilesCollector добавить сортировку по наиболее близкому
+совпадению имени файла с именем исходного файла группы(Возможно проблема уйдет сама собой, если начать пользоваться
+API JetBrains).
+
+Нужно правильно настроить плагин под Rider2026.1a(файлы build.gradle.kts, settings.gradle.kts, plugin.xml).

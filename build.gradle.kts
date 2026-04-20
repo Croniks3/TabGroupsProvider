@@ -1,10 +1,16 @@
 plugins {
-    kotlin("jvm") version "2.1.10"
+    id("java")
     id("org.jetbrains.intellij.platform") version "2.14.0"
 }
 
 group = "com.github.Croniks3"
 version = "0.1.0"
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
 
 repositories {
     mavenCentral()
@@ -15,10 +21,20 @@ repositories {
 
 dependencies {
     intellijPlatform {
-        intellijIdeaCommunity("2024.3")
+        local(providers.gradleProperty("localRiderPath"))
     }
 }
 
-kotlin {
-    jvmToolchain(21)
+intellijPlatform {
+    pluginConfiguration {
+        ideaVersion {
+            sinceBuild = providers.gradleProperty("pluginSinceBuild")
+        }
+    }
+}
+
+tasks {
+    wrapper {
+        gradleVersion = providers.gradleProperty("gradleVersion").get()
+    }
 }

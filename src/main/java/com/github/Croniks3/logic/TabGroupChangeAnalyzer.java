@@ -86,13 +86,9 @@ public final class TabGroupChangeAnalyzer {
             }
 
             if (oldFileWasInGroup) {
-                return createChangeInfoWithLightUpdate(new TabGroupLightUpdate(
-                        TabGroupLightUpdateType.REMOVE_FILE,
-                        oldFilePath,
-                        null
-                ));
+                return createChangeInfoWithHeavyRebuild();
             }
-
+            
             if (newFileMatchesGroup) {
                 return createChangeInfoWithLightUpdate(new TabGroupLightUpdate(
                         TabGroupLightUpdateType.ADD_FILE,

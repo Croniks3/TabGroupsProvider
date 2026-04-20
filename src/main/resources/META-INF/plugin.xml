@@ -1,11 +1,16 @@
 <idea-plugin>
     <id>com.github.Croniks3.TabGroupsProvider</id>
     <name>TabGroupsProvider</name>
-    <vendor>YourName</vendor>
+    <vendor>https://github.com/Croniks3</vendor>
 
     <description><![CDATA[
-        Groups files with the same basename by configurable extension rules.
+        Groups files into groups based on customizable naming, directory and extension rules.
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+
+    </extensions>
+
 </idea-plugin>
