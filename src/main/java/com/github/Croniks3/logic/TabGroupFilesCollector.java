@@ -23,55 +23,46 @@ public final class TabGroupFilesCollector {
         Objects.requireNonNull(definition);
         Objects.requireNonNull(groupedExtensionsRule);
 
-        ProjectFileInfo sourceFile = findSourceFile(projectFiles, definition.getSourceFilePath());
+        Path normalizedSourcePath = Path.of(definition.getSourceFilePath()).normalize();
+
+        ProjectFileInfo sourceFile = null;
+        List<ProjectFileInfo> candidatesBeforeSource = new ArrayList<>();
+        List<ProjectFileInfo> result = new ArrayList<>();
+
+        for (ProjectFileInfo projectFile : projectFiles) {
+            Path normalizedProjectFilePath = Path.of(projectFile.getFilePath()).normalize();
+
+            if (normalizedProjectFilePath.equals(normalizedSourcePath)) {
+                sourceFile = projectFile;
+
+                if (candidateMatcher.matches(sourceFile, sourceFile, definition, groupedExtensionsRule)) {
+                    result.add(sourceFile);
+                }
+
+                for (ProjectFileInfo candidateFile : candidatesBeforeSource) {
+                    if (candidateMatcher.matches(sourceFile, candidateFile, definition, groupedExtensionsRule)) {
+                        result.add(candidateFile);
+                    }
+                }
+
+                candidatesBeforeSource.clear();
+                continue;
+            }
+
+            if (sourceFile == null) {
+                candidatesBeforeSource.add(projectFile);
+                continue;
+            }
+
+            if (candidateMatcher.matches(sourceFile, projectFile, definition, groupedExtensionsRule)) {
+                result.add(projectFile);
+            }
+        }
+
         if (sourceFile == null) {
             return List.of();
         }
 
-        List<ProjectFileInfo> result = new ArrayList<>();
-
-        // Сравниваем исходный файл группы с самим собой на всякий случай,
-        // что бы зафиксировать его первым в массиве result. Это нужно, что бы
-        // TabGroupFilesLimiter случайно не срезал этот файл из результата.
-        if (candidateMatcher.matches(sourceFile, sourceFile, definition, groupedExtensionsRule)) {
-            result.add(sourceFile);
-        }
-
-        for (ProjectFileInfo candidateFile : projectFiles) {
-            // Так как в result исходный файл группы был уже добавлен выше,
-            // делаем проверку, на то что бы он не попал второй раз.
-            if (isSamePath(candidateFile.getFilePath(), sourceFile.getFilePath())) {
-                continue;
-            }
-
-            if (candidateMatcher.matches(sourceFile, candidateFile, definition, groupedExtensionsRule)) {
-                result.add(candidateFile);
-            }
-        }
-
         return List.copyOf(result);
-    }
-
-    private @Nullable ProjectFileInfo findSourceFile(
-            @NotNull List<ProjectFileInfo> projectFiles,
-            @NotNull String sourceFilePath
-    ) {
-        Objects.requireNonNull(projectFiles);
-        Objects.requireNonNull(sourceFilePath);
-
-        Path normalizedSourcePath = Path.of(sourceFilePath).normalize();
-
-        for (ProjectFileInfo projectFile : projectFiles) {
-            Path normalizedProjectFilePath = Path.of(projectFile.getFilePath()).normalize();
-            if (normalizedProjectFilePath.equals(normalizedSourcePath)) {
-                return projectFile;
-            }
-        }
-
-        return null;
-    }
-
-    private boolean isSamePath(@NotNull String firstPath, @NotNull String secondPath) {
-        return Path.of(firstPath).normalize().equals(Path.of(secondPath).normalize());
     }
 }

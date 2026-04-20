@@ -48,5 +48,5 @@
 На данный момент она вызывается в TabGroupLifecycleManager -> groupBuilder.rebuild().
 
 TabGroupsFilesCollector написан просто ужасно. Дважды совершает проход по всем файлам проекта,
-в методах collectMatchedFiles и findSourceFile - это пиздец, с этим нужно что-то делать!
+в методах collectMatchedFiles и findSourceFile - это пиздец, с этим нужно что-то делать! - исправлено
 
